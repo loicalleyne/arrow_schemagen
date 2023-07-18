@@ -1,3 +1,5 @@
+// Package arrow_schemagen generates an Apache Arrow schema from
+// an Apache Arrow schema or from a map[string]interface{}.
 package arrow_schemagen
 
 import (
@@ -15,9 +17,9 @@ type record struct {
 	fields []interface{}
 }
 
-// ArrowSchemaFromAvro returns a new Arrow schema from an Avro schema JSON
+// ArrowSchemaFromAvro returns a new Arrow schema from an Avro schema JSON.
 // Assumes that Avro schema comes from OCF or Schema Registry and that
-// actual fields are in fields[] of top-level object
+// actual fields are in fields[] of top-level object.
 func ArrowSchemaFromAvro(avroSchema []byte) (*arrow.Schema, error) {
 	var m map[string]interface{}
 	var node record
@@ -223,8 +225,9 @@ func traverseNodes(node record) arrow.Field {
 }
 
 // AvroPrimitiveToArrowType returns the Arrow DataType equivalent to a
-// Avro primitive type
-// NOTE: Arrow Binary type is used as a catchall to avoid potential data loss
+// Avro primitive type.
+//
+// NOTE: Arrow Binary type is used as a catchall to avoid potential data loss.
 func AvroPrimitiveToArrowType(avroFieldType string) arrow.DataType {
 	switch avroFieldType {
 	// int: 32-bit signed integer

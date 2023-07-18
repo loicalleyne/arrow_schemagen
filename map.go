@@ -8,7 +8,7 @@ import (
 )
 
 // ArrowSchemaFromMap returns a new Arrow schema from an arbitrary
-// map[string]interface{}
+// map[string]interface{}.
 func ArrowSchemaFromMap(m map[string]interface{}) (*arrow.Schema, error) {
 	s := traverseMap(m)
 	return arrow.NewSchema(s, nil), nil
@@ -45,7 +45,7 @@ func traverseMap(m map[string]interface{}) []arrow.Field {
 }
 
 // GoPrimitiveToArrowType returns the Arrow DataType equivalent to a
-// Go primitive type
+// Go primitive type.
 //
 // NOTE The intended use case is to support the generation of an Arrow schema
 // from arbitrary JSON unmarshaled to a map[string]interface{}.

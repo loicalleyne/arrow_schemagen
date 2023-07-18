@@ -1,4 +1,4 @@
-module arrow_schemagen
+module github.com/loicalleyne/arrow_schemagen
 
 go 1.20
 
