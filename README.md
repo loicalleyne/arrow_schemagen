@@ -1,6 +1,6 @@
 # arrow_schemagen
  Generate an Apache Arrow schema from an Avro schema or an arbitrary map
- Uses v12 of the Apache Arrow Go package: github.com/apache/arrow/go/v12/arrow
+ Use with Apache Arrow Go package v12 or higher: github.com/apache/arrow/go/v12/arrow
 
 How to use:
 
@@ -14,7 +14,7 @@ import (
 func main() {
 	var avroSchema map[string]interface{}
 	json.Unmarshal([]byte(avroSchemaJSON), &avroSchema)
-	schema, err := ArrowSchemaFromAvro(avroSchema)
+	schema, err := asg.ArrowSchemaFromAvro(avroSchema)
 	if err != nil {
 		// deal with error
 	}
@@ -50,7 +50,7 @@ func main() {
 			"height":      1920,
 		},
 	}
-	schema, err := ArrowSchemaFromMap(sentReq)
+	schema, err := asg.ArrowSchemaFromMap(sentReq)
 	if err != nil {
 		panic(err)
 	}
