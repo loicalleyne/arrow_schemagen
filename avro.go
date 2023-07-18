@@ -167,8 +167,7 @@ func traverseNodes(node record) arrow.Field {
 			// that represent durations at different granularities of time.
 			// The first stores a number in months, the second stores a number in days, and the third stores a number in milliseconds.
 			case "duration":
-				// Placeholder - maybe change to struct or FixedWidth bytes
-				return arrow.Field{Name: node.name, Type: arrow.FixedWidthTypes.Duration_ms}
+				return arrow.Field{Name: node.name, Type: arrow.FixedWidthTypes.MonthDayNanoInterval}
 			}
 		}
 
