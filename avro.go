@@ -2,6 +2,7 @@ package arrow_schemagen
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 
@@ -14,18 +15,21 @@ type record struct {
 	fields []interface{}
 }
 
+// ArrowSchemaFromAvro returns a new Arrow schema from an Avro schema JSON
+// Assumes that Avro schema comes from OCF or Schema Registry and that
+// actual fields are in fields[] of top-level object
 func ArrowSchemaFromAvro(avroSchema []byte) (*arrow.Schema, error) {
 	var m map[string]interface{}
 	var node record
 	json.Unmarshal(avroSchema, &m)
-	node.name = m["name"].(string)
-	node.ofType = m["type"]
 	if _, f := m["fields"]; f {
 		for _, field := range m["fields"].([]interface{}) {
 			node.fields = append(node.fields, field.(map[string]interface{}))
 		}
 	}
-	// Assuming that Avro schema comes from OCF or Schema Registry and that actual fields are in fields[] of top-level object
+	if len(node.fields) == 0 {
+		return fmt.Errorf("invalid avro schema: no top level fields found")
+	}
 	fields := iterateFields(node.fields)
 	return arrow.NewSchema(fields, nil), nil
 }
@@ -62,7 +66,7 @@ func traverseNodes(node record) arrow.Field {
 	case string:
 		// primitive type
 		if len(node.fields) == 0 {
-			return arrow.Field{Name: node.name, Type: AvroToArrowPrimitiveType(node.ofType.(string))}
+			return arrow.Field{Name: node.name, Type: AvroPrimitiveToArrowType(node.ofType.(string))}
 		} else {
 			// avro "record" type, node has "fields" array
 			if node.ofType.(string) == "record" {
@@ -72,8 +76,7 @@ func traverseNodes(node record) arrow.Field {
 				if len(node.fields) > 0 {
 					n.fields = append(n.fields, node.fields...)
 				}
-				f := iterateFields(n.fields)
-				return arrow.Field{Name: node.name, Type: arrow.StructOf(f...)}
+				return arrow.Field{Name: node.name, Type: arrow.StructOf(iterateFields(n.fields)...)}
 			}
 		}
 	// complex types
@@ -84,7 +87,7 @@ func traverseNodes(node record) arrow.Field {
 
 		// Avro "array" field type = Arrow List type
 		if i, ok := node.ofType.(map[string]interface{})["items"]; ok {
-			return arrow.Field{Name: node.name, Type: arrow.ListOf(AvroToArrowPrimitiveType(i.(string)))}
+			return arrow.Field{Name: node.name, Type: arrow.ListOf(AvroPrimitiveToArrowType(i.(string)))}
 		}
 
 		// Avro "enum" field type = Arrow dictionary type
@@ -104,7 +107,6 @@ func traverseNodes(node record) arrow.Field {
 			case sl > math.MaxUint16 && sl <= math.MaxUint32:
 				dt.IndexType = arrow.PrimitiveTypes.Uint32
 			}
-
 			return arrow.Field{Name: node.name, Type: &dt, Nullable: true, Metadata: arrow.MetadataFrom(symbols)}
 		}
 
@@ -176,7 +178,7 @@ func traverseNodes(node record) arrow.Field {
 		}
 		// Avro "map" field type = Arrow Map type
 		if i, ok := node.ofType.(map[string]interface{})["values"]; ok {
-			return arrow.Field{Name: node.name, Type: arrow.MapOf(arrow.BinaryTypes.String, AvroToArrowPrimitiveType(i.(string)))}
+			return arrow.Field{Name: node.name, Type: arrow.MapOf(arrow.BinaryTypes.String, AvroPrimitiveToArrowType(i.(string)))}
 		}
 		// Avro "record" field type = Arrow Struct type
 		if _, f := node.ofType.(map[string]interface{})["fields"]; f {
@@ -211,7 +213,7 @@ func traverseNodes(node record) arrow.Field {
 		}
 		// Supported Avro union type is null + one other type
 		if len(unionTypes) == 1 {
-			return arrow.Field{Name: node.name, Type: AvroToArrowPrimitiveType(unionTypes[0])}
+			return arrow.Field{Name: node.name, Type: AvroPrimitiveToArrowType(unionTypes[0])}
 		} else {
 			// BYTE_ARRAY is the catchall if union type is anything beyond null + one other type
 			// TODO: Complex AVRO union to Arrow Dense || Sparse Union
@@ -221,7 +223,10 @@ func traverseNodes(node record) arrow.Field {
 	return arrow.Field{Name: node.name, Type: arrow.BinaryTypes.Binary}
 }
 
-func AvroToArrowPrimitiveType(avroFieldType string) arrow.DataType {
+// AvroPrimitiveToArrowType returns the Arrow DataType equivalent to a
+// Avro primitive type
+// NOTE: Arrow Binary type is used as a catchall to avoid potential data loss
+func AvroPrimitiveToArrowType(avroFieldType string) arrow.DataType {
 	switch avroFieldType {
 	// int: 32-bit signed integer
 	case "int":

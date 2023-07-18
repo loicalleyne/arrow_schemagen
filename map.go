@@ -7,6 +7,8 @@ import (
 	"github.com/apache/arrow/go/v12/arrow"
 )
 
+// ArrowSchemaFromMap returns a new Arrow schema from an arbitrary
+// map[string]interface{}
 func ArrowSchemaFromMap(m map[string]interface{}) (*arrow.Schema, error) {
 	s := traverseMap(m)
 	return arrow.NewSchema(s, nil), nil
@@ -25,11 +27,10 @@ func traverseMap(m map[string]interface{}) []arrow.Field {
 				switch f := reflect.TypeOf(v.([]interface{})[0]); f.String() {
 				// slice of map
 				case "map":
-					x := traverseMap(v.(map[string]interface{}))
-					s = append(s, arrow.Field{Name: k, Type: arrow.StructOf(x...)})
+					s = append(s, arrow.Field{Name: k, Type: arrow.StructOf(traverseMap(v.(map[string]interface{}))...)})
 				// slice of primitive type
 				default:
-					s = append(s, arrow.Field{Name: k, Type: arrow.ListOf(GoPrimitiveToArrowType(fmt.Sprintf("%T", f)))})
+					s = append(s, arrow.Field{Name: k, Type: arrow.ListOf(GoPrimitiveToArrowType(f.String()))})
 				}
 			}
 		// primitive types
@@ -43,6 +44,15 @@ func traverseMap(m map[string]interface{}) []arrow.Field {
 	return s
 }
 
+// GoPrimitiveToArrowType returns the Arrow DataType equivalent to a
+// Go primitive type
+//
+// NOTE The intended use case is to support the generation of an Arrow schema
+// from arbitrary JSON unmarshaled to a map[string]interface{}.
+// The same schema would then be reused for other JSON using the same schema,
+// the field containing nil in the map used as a schema template could be
+// populated in the subsequent JSON messages, therefore the Go nil type is
+// mapped to Arrow Binary type as a catchall to avoid losing data.
 func GoPrimitiveToArrowType(goType string) arrow.DataType {
 	switch goType {
 	case "bool":

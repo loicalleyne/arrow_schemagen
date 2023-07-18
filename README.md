@@ -1,6 +1,6 @@
 # arrow_schemagen
- Generate an Apache Arrow schema from an Avro schema or an arbitrary map
- Use with Apache Arrow Go package v12 or higher: github.com/apache/arrow/go/v12/arrow
+ Generate an Apache Arrow schema from an Avro schema or an arbitrary map.
+ Use with Apache Arrow Go package v12 or higher
 
 How to use:
 
@@ -61,5 +61,5 @@ func main() {
 schema:
   fields: 2
     - request: type=struct<request_uri: utf8, referer: utf8, useragent: utf8, datetime: utf8, ip: utf8, host: utf8, uri: utf8>
-    - resource: type=struct<id: int32, ids: list<item: binary, nullable>, external_id: utf8, width: int32, height: int32>
+    - resource: type=struct<ids: list<item: int64, nullable>, external_id: utf8, width: int64, height: int64, id: int64>
 ```
