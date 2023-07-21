@@ -1,20 +1,25 @@
 # arrow_schemagen
  Generate an Apache Arrow schema from an Avro schema or an arbitrary map.
- Use with Apache Arrow Go package v12 or higher
+ Use with Apache Arrow Go package v13
 
 How to use:
 
 Pass in an Avro schema JSON and receive a *arrow.Schema
 ```golang
 import (
-	"github.com/apache/arrow/go/v12/arrow"
+	"github.com/apache/arrow/go/v13/arrow"
 	asg "github.com/loicalleyne/arrow_schemagen"
 )
 
 func main() {
 	var avroSchema map[string]interface{}
 	json.Unmarshal([]byte(avroSchemaJSON), &avroSchema)
-	schema, err := asg.ArrowSchemaFromAvro(avroSchema)
+	//
+	// ArrowSchemaFromAvro returns a new Arrow schema from an Avro schema JSON.
+	// If the top level is of record type, set includeTopLevel to either make
+	// its fields top level fields in the resulting schema or nested in a single field.
+	//
+	schema, err := asg.ArrowSchemaFromAvro(avroSchema, false)
 	if err != nil {
 		// deal with error
 	}
