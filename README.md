@@ -1,4 +1,7 @@
 # arrow_schemagen
+## Note: 
+Please use (Bodkin)[https://github.com/loicalleyne/bodkin] instead. 
+
  Generate an Apache Arrow schema from an Avro schema or an arbitrary map.
  Use with Apache Arrow Go package v13
 
